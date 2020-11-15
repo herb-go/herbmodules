@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/herb-go/herb/cache"
-	_ "github.com/herb-go/herb/cache/drivers/syncmapcache"
-	_ "github.com/herb-go/herb/cache/marshalers/msgpackmarshaler"
+	"github.com/herb-go/deprecated/cache"
+	_ "github.com/herb-go/deprecated/cache/drivers/syncmapcache"
+	_ "github.com/herb-go/deprecated/cache/marshalers/msgpackmarshaler"
 )
 
 func getStore(ttl time.Duration) *Store {

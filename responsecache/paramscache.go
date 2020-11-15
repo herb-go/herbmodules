@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 	"github.com/herb-go/herb/middleware/httpinfo"
 )
 

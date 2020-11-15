@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 
-	_ "github.com/herb-go/herb/cache/drivers/syncmapcache"
+	_ "github.com/herb-go/deprecated/cache/drivers/syncmapcache"
 )
 
 func getClientDriver(ttl time.Duration) *Store {

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/herb-go/herb/cache/drivers/syncmapcache"
+	_ "github.com/herb-go/deprecated/cache/drivers/syncmapcache"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 )
 
 func newTestCache(ttl int64) *cache.Cache {

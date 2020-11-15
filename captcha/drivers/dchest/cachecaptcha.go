@@ -7,7 +7,7 @@ import (
 	"github.com/herb-go/herbmodules/captcha/drivers/dchest/dchestimage"
 
 	"github.com/herb-go/herbmodules/captcha"
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 )
 
 type Driver struct {

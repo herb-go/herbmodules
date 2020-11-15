@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 )
 
 func NewTestCacheStore(ttl time.Duration) *Store {

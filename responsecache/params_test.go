@@ -6,7 +6,7 @@ import (
 
 	"github.com/herb-go/herb/middleware/httpinfo"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 )
 
 type testID struct {

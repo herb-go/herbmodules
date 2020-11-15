@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"time"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 
 	"crypto/aes"
 	"crypto/cipher"

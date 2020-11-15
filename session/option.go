@@ -3,7 +3,7 @@ package session
 import (
 	"time"
 
-	"github.com/herb-go/herb/cache"
+	"github.com/herb-go/deprecated/cache"
 )
 
 // Option store init option interface.
