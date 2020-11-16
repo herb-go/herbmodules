@@ -108,3 +108,39 @@ func TestSession(t *testing.T) {
 		t.Fatal(sd, sd2)
 	}
 }
+
+func TestNotStarted(t *testing.T) {
+	var err error
+	s := newSession()
+	if s.Started() {
+		t.Fatal()
+	}
+	err = s.Set([]byte("test"), []byte("data"))
+	if err != ErrSessionNotStarted {
+		t.Fatal()
+	}
+	_, err = s.Get([]byte("test"))
+	if err != ErrSessionNotStarted {
+		t.Fatal()
+	}
+	err = s.Delete([]byte("test"))
+	if err != ErrSessionNotStarted {
+		t.Fatal()
+	}
+	s.MarkAsStarted()
+	if !s.Started() {
+		t.Fatal()
+	}
+	err = s.Set([]byte("test"), []byte("data"))
+	if err != nil {
+		t.Fatal()
+	}
+	_, err = s.Get([]byte("test"))
+	if err != nil {
+		t.Fatal()
+	}
+	err = s.Delete([]byte("test"))
+	if err != nil {
+		t.Fatal()
+	}
+}

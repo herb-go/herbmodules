@@ -12,18 +12,13 @@ import (
 type SessionName string
 
 type Store struct {
-	Name      SessionName
-	AutoStart bool
-	engine    Engine
+	Name        SessionName
+	AutoStart   bool
+	engine      Engine
+	MaxLifetime int64
 }
 
-func (s *Store) newSession() *Session {
-	session := newSession()
-	session.store = s
-	return session
-}
-
-func (s *Store) StartSession(createdAt int64, expiredAt int64) (string, *Session, error) {
+func (s *Store) StartSession() (string, *Session, error) {
 	t, err := s.engine.NewToken()
 	if err != nil {
 		return "", nil, err
@@ -31,8 +26,9 @@ func (s *Store) StartSession(createdAt int64, expiredAt int64) (string, *Session
 	session := newSession()
 	session.MarkAsStarted()
 	session.token.Store(t)
-	session.expiredAt = expiredAt
-	session.createdAt = createdAt
+	now := time.Now().Unix()
+	session.expiredAt = now + s.MaxLifetime
+	session.createdAt = now
 	return t, session, nil
 }
 
@@ -59,17 +55,12 @@ func (s *Store) LoadSession(token string) (*Session, error) {
 	return session, nil
 }
 
-func (s *Store) SaveSession(session *Session, ttl int64) (newtoken string, err error) {
+func (s *Store) SaveSession(session *Session) (newtoken string, err error) {
 	data, err := msgpack.Marshal(session.getdata())
 	if err != nil {
 		return "", err
 	}
-	var token string
-	t := session.token.Load()
-	if t != nil {
-		token = t.(string)
-	}
-	return s.engine.UpdateToken(token, data, ttl)
+	return s.engine.UpdateToken(session.Token(), data, s.MaxLifetime)
 }
 func (s *Store) RevokeSession(token string) (newtoken string, err error) {
 	return s.engine.RevokeToken(token)

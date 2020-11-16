@@ -28,7 +28,6 @@ type Session struct {
 	data      sync.Map
 	updated   *int32
 	revoked   *int32
-	store     *Store
 	token     atomic.Value
 	started   *int32
 }
@@ -111,7 +110,17 @@ func (s *Session) Started() bool {
 	started := atomic.LoadInt32(s.started)
 	return started == 1
 }
-
+func (s *Session) SetToken(token string) {
+	s.token.Store(token)
+}
+func (s *Session) Token() string {
+	var token string
+	t := s.token.Load()
+	if t != nil {
+		token = t.(string)
+	}
+	return token
+}
 func newSession() *Session {
 	updated := int32(0)
 	revoked := int32(0)
