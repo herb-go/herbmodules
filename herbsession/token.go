@@ -1,0 +1,3 @@
+package herbsession
+
+const TokenEmpty = ""
