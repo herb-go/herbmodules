@@ -4,6 +4,9 @@ import (
 	"net/http"
 )
 
-type RequestInstaller interface {
-	InstallToRequest(Session) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+type InstallerID string
+
+type Installer interface {
+	InstallerMiddleware(*Store) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+	InstallerID() InstallerID
 }

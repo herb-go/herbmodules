@@ -15,6 +15,20 @@ func newTestAESEngine() *AESEngine {
 		Secret: []byte("secret"),
 	}
 }
+func TestAESEngineParseFail(t *testing.T) {
+	var err error
+	var e *AESEngine
+	var token string
+	e = newTestAESEngine()
+	token, err = AESNonceEncryptBase64([]byte("12345"), e.Secret)
+	if err != nil {
+		t.Fatal()
+	}
+	_, _, err = e.LoadToken(token)
+	if err != herbdata.ErrNotFound {
+		t.Fatal()
+	}
+}
 func TestAESEngine(t *testing.T) {
 	var err error
 	var data []byte
@@ -31,7 +45,7 @@ func TestAESEngine(t *testing.T) {
 		t.Fatal()
 	}
 	token, err = e.NewToken()
-	if token != TokenEmpty || err != nil {
+	if token == TokenEmpty || err != nil {
 		t.Fatal(token)
 	}
 	data = []byte("data")
@@ -92,8 +106,8 @@ func TestAESEngineWithZeroTimeout(t *testing.T) {
 	if lastactive != 0 || err != nil {
 		t.Fatal()
 	}
-	newtoken, err = e.RevokeToken(token)
-	if newtoken != TokenEmpty || err != nil {
+	err = e.RevokeToken(token)
+	if err != nil {
 		t.Fatal()
 	}
 }

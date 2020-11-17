@@ -41,15 +41,15 @@ func TestSession(t *testing.T) {
 		t.Fatal(ok)
 	}
 	s = newSession()
-	ok = s.Revoked()
+	ok = s.Temporay()
 	if ok != false {
 		t.Fatal(ok)
 	}
 	if s.Updated() {
 		t.Fatal()
 	}
-	s.MarkAsRevoked()
-	ok = s.Revoked()
+	s.MarkAsTemporay()
+	ok = s.Temporay()
 	if ok != true {
 		t.Fatal(ok)
 	}
@@ -106,6 +106,19 @@ func TestSession(t *testing.T) {
 		len(sd2.Data) != len(sd.Data) || sd2.Data[0].Key != sd.Data[0].Key ||
 		bytes.Compare(sd2.Data[0].Value, sd.Data[0].Value) != 0 {
 		t.Fatal(sd, sd2)
+	}
+	s.MarkAsTemporay()
+	sd2 = s.getdata()
+	if !sd2.Temporay {
+		t.Fatal()
+	}
+	s = newSession()
+	if s.Temporay() {
+		t.Fatal()
+	}
+	s.setdata(sd2)
+	if !s.Temporay() {
+		t.Fatal()
 	}
 }
 

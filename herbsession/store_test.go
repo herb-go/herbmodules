@@ -2,12 +2,25 @@ package herbsession
 
 import (
 	"bytes"
+	"net/http"
+	"net/http/cookiejar"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/herb-go/herb/middleware"
+	"github.com/herb-go/herb/service/httpservice/httpcookie"
 	"github.com/herb-go/herbdata"
 )
 
+func newTestStore() *Store {
+	return &Store{
+		Name:        "test",
+		MaxLifetime: 1200,
+		AutoStart:   false,
+		Engine:      newTestAESEngine(),
+	}
+}
 func TestStore(t *testing.T) {
 	var s *Store
 	var err error
@@ -18,13 +31,9 @@ func TestStore(t *testing.T) {
 	var lastactive int64
 	var e = newTestAESEngine()
 	e.Timeout = 100
-	s = &Store{
-		Name:        "test",
-		MaxLifetime: 2,
-		AutoStart:   false,
-		engine:      e,
-	}
-
+	s = newTestStore()
+	s.MaxLifetime = 2
+	s.Engine = e
 	token, session, err = s.StartSession()
 	if err != nil || session == nil {
 		t.Fatal(err, token, session)
@@ -36,14 +45,17 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
-	token, err = s.SaveSession(session)
+	err = s.SaveSession(session)
 	if err != nil {
 		t.Fatal()
 	}
 	time.Sleep(1 * time.Second)
-	newsession, err = s.LoadSession(token)
+	newsession, err = s.LoadSession(session.Token())
 	if err != nil {
 		t.Fatal()
+	}
+	if newsession.LoadedFrom() != session.Token() {
+		t.Fatal(newsession.LoadedFrom())
 	}
 	data, err = newsession.Load("test")
 	if err != nil {
@@ -57,12 +69,8 @@ func TestStore(t *testing.T) {
 	if err != nil || lastactive-time.Now().Unix() > 1 {
 		t.Fatal()
 	}
-	token, err = s.RevokeSession(newsession.Token())
+	err = s.RevokeSession(newsession.Token())
 	if err != nil {
-		t.Fatal()
-	}
-	newsession, err = s.LoadSession(token)
-	if err != herbdata.ErrNotFound {
 		t.Fatal()
 	}
 	token, session, err = s.StartSession()
@@ -73,17 +81,151 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
-	token, err = s.SaveSession(session)
+	err = s.SaveSession(session)
 	if err != nil {
 		t.Fatal()
 	}
-	_, err = s.LoadSession(token)
+	_, err = s.LoadSession(session.Token())
 	if err != nil {
 		t.Fatal()
 	}
 	time.Sleep(3 * time.Second)
-	_, err = s.LoadSession(token)
+	_, err = s.LoadSession(session.Token())
 	if err != herbdata.ErrNotFound {
 		t.Fatal()
+	}
+}
+
+func TestTemporay(t *testing.T) {
+	var err error
+	var s *Store
+	var c *Cookie
+	var client *http.Client
+	var jar *cookiejar.Jar
+	var req *http.Request
+	var resp *http.Response
+	var cookies []*http.Cookie
+	s = newTestStore()
+	c = &Cookie{
+		httpcookie.Config{
+			Name: "session",
+		},
+	}
+	s.AddInstaller(c)
+	var app = middleware.New(s.MustInstall())
+
+	app.Handle(newTestMux(s))
+	server := httptest.NewServer(app)
+	defer server.Close()
+	jar, err = cookiejar.New(nil)
+	if err != nil {
+		panic(err)
+	}
+	client = &http.Client{}
+	client.Jar = jar
+
+	req, err = http.NewRequest("GET", server.URL+"/temporay", nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Fatal(resp.StatusCode)
+	}
+	cookies = resp.Cookies()
+	if len(cookies) != 1 || !cookies[0].Expires.IsZero() {
+		t.Fatal(len(cookies), cookies)
+	}
+
+}
+func TestNotAutoStart(t *testing.T) {
+	var err error
+	var s *Store
+	var c *Cookie
+	var client *http.Client
+	var jar *cookiejar.Jar
+	var req *http.Request
+	var resp *http.Response
+	s = newTestStore()
+	c = &Cookie{
+		httpcookie.Config{
+			Name: "session",
+		},
+	}
+	s.AddInstaller(c)
+	var app = middleware.New(s.MustInstall())
+
+	app.Handle(newTestMux(s))
+	server := httptest.NewServer(app)
+	defer server.Close()
+	jar, err = cookiejar.New(nil)
+	if err != nil {
+		panic(err)
+	}
+	client = &http.Client{}
+	client.Jar = jar
+	req, err = http.NewRequest("GET", server.URL+"/get", nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 500 {
+		t.Fatal()
+	}
+	req, err = http.NewRequest("GET", server.URL+"/set?value=test", nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 500 {
+		t.Fatal()
+	}
+	req, err = http.NewRequest("GET", server.URL+"/delete", nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 500 {
+		t.Fatal()
+	}
+}
+
+func catchPanic(h func()) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = r.(error)
+		}
+	}()
+	h()
+	return nil
+}
+
+func TestInstallerNotFound(t *testing.T) {
+	var s *Store
+	var err error
+	s = New()
+	err = catchPanic(func() { s.MustInstall() })
+	if err != ErrInstallerNotFound {
+		t.Fatal(err)
+	}
+	err = catchPanic(func() { s.MustInstallByID(InstallerIDCookie) })
+	if err != ErrInstallerNotFound {
+		t.Fatal(err)
 	}
 }

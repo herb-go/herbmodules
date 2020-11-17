@@ -18,7 +18,18 @@ type aesEngineData struct {
 }
 
 func (e *AESEngine) NewToken() (token string, err error) {
-	return TokenEmpty, nil
+	if e.Timeout <= 0 {
+		return TokenEmpty, nil
+	}
+	d := &aesEngineData{
+		LastActive: time.Now().Unix(),
+	}
+	bytes, err := msgpack.Marshal(d)
+	if err != nil {
+		return "", err
+	}
+
+	return AESNonceEncryptBase64(bytes, e.Secret)
 }
 func (e *AESEngine) TokenLastActive(token string) (int64, error) {
 	if e.Timeout <= 0 {
@@ -52,7 +63,7 @@ func (e *AESEngine) LoadToken(token string) (newtoken string, data []byte, err e
 	d := &aesEngineData{}
 	err = msgpack.Unmarshal(decrypted, d)
 	if err != nil {
-		return "", nil, err
+		return "", nil, herbdata.ErrNotFound
 	}
 	if e.Timeout <= 0 {
 		return token, d.Data, nil
@@ -89,8 +100,8 @@ func (e *AESEngine) UpdateToken(token string, data []byte, maxliftime int64) (ne
 	}
 	return string(encrypted), nil
 }
-func (e *AESEngine) RevokeToken(token string) (newtoken string, err error) {
-	return TokenEmpty, nil
+func (e *AESEngine) RevokeToken(token string) (err error) {
+	return nil
 }
 func (e *AESEngine) DynamicToken() bool {
 	return true

@@ -16,6 +16,7 @@ type SessionData struct {
 	Data      []*SessionValue
 	CreatedAt int64
 	ExpiredAt int64
+	Temporay  bool
 }
 
 func newSessionData() *SessionData {
@@ -23,13 +24,14 @@ func newSessionData() *SessionData {
 }
 
 type Session struct {
-	createdAt int64
-	expiredAt int64
-	data      sync.Map
-	updated   *int32
-	revoked   *int32
-	token     atomic.Value
-	started   *int32
+	createdAt  int64
+	expiredAt  int64
+	data       sync.Map
+	updated    *int32
+	token      atomic.Value
+	started    *int32
+	temporay   *int32
+	loadedFrom string
 }
 
 func (s *Session) setdata(data *SessionData) {
@@ -37,6 +39,11 @@ func (s *Session) setdata(data *SessionData) {
 	s.expiredAt = data.ExpiredAt
 	for _, v := range data.Data {
 		s.data.Store(v.Key, v.Value)
+	}
+	if data.Temporay {
+		atomic.StoreInt32(s.temporay, 1)
+	} else {
+		atomic.StoreInt32(s.temporay, 0)
 	}
 }
 func (s *Session) getdata() *SessionData {
@@ -47,6 +54,7 @@ func (s *Session) getdata() *SessionData {
 		data.Data = append(data.Data, &SessionValue{Key: key.(string), Value: val.([]byte)})
 		return true
 	})
+	data.Temporay = (atomic.LoadInt32(s.temporay) == 1)
 	return data
 }
 
@@ -91,17 +99,12 @@ func (s *Session) Delete(key []byte) error {
 func (s *Session) MarkAsUpdated() {
 	atomic.StoreInt32(s.updated, 1)
 }
+func (s *Session) markAsNotUpdated() {
+	atomic.StoreInt32(s.updated, 0)
+}
 func (s *Session) Updated() bool {
 	updated := atomic.LoadInt32(s.updated)
 	return updated == 1
-}
-func (s *Session) MarkAsRevoked() {
-	atomic.StoreInt32(s.revoked, 1)
-	s.MarkAsUpdated()
-}
-func (s *Session) Revoked() bool {
-	revoked := atomic.LoadInt32(s.revoked)
-	return revoked == 1
 }
 func (s *Session) MarkAsStarted() {
 	atomic.StoreInt32(s.started, 1)
@@ -121,13 +124,25 @@ func (s *Session) Token() string {
 	}
 	return token
 }
+func (s *Session) Temporay() bool {
+	temporay := atomic.LoadInt32(s.temporay)
+	return temporay == 1
+}
+func (s *Session) MarkAsTemporay() {
+	s.MarkAsUpdated()
+	atomic.StoreInt32(s.temporay, 1)
+}
+
+func (s *Session) LoadedFrom() string {
+	return s.loadedFrom
+}
 func newSession() *Session {
 	updated := int32(0)
-	revoked := int32(0)
+	temporay := int32(0)
 	started := int32(0)
 	return &Session{
-		updated: &updated,
-		revoked: &revoked,
-		started: &started,
+		updated:  &updated,
+		started:  &started,
+		temporay: &temporay,
 	}
 }
