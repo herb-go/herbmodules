@@ -111,8 +111,8 @@ func TestTemporay(t *testing.T) {
 			Name: "session",
 		},
 	}
-	s.AddInstaller(c)
-	var app = middleware.New(s.MustInstall())
+	s.Installer = c
+	var app = middleware.New(s.Install())
 
 	app.Handle(newTestMux(s))
 	server := httptest.NewServer(app)
@@ -156,8 +156,8 @@ func TestNotAutoStart(t *testing.T) {
 			Name: "session",
 		},
 	}
-	s.AddInstaller(c)
-	var app = middleware.New(s.MustInstall())
+	s.Installer = c
+	var app = middleware.New(s.Install())
 
 	app.Handle(newTestMux(s))
 	server := httptest.NewServer(app)
@@ -214,18 +214,4 @@ func catchPanic(h func()) (err error) {
 	}()
 	h()
 	return nil
-}
-
-func TestInstallerNotFound(t *testing.T) {
-	var s *Store
-	var err error
-	s = New()
-	err = catchPanic(func() { s.MustInstall() })
-	if err != ErrInstallerNotFound {
-		t.Fatal(err)
-	}
-	err = catchPanic(func() { s.MustInstallByID(InstallerIDCookie) })
-	if err != ErrInstallerNotFound {
-		t.Fatal(err)
-	}
 }

@@ -7,6 +7,8 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+var EngineNameAES = EngineName("aes")
+
 type AESEngine struct {
 	Secret  []byte
 	Timeout int64
@@ -17,6 +19,9 @@ type aesEngineData struct {
 	Data       []byte
 }
 
+func (e *AESEngine) EngineName() EngineName {
+	return EngineNameAES
+}
 func (e *AESEngine) NewToken() (token string, err error) {
 	if e.Timeout <= 0 {
 		return TokenEmpty, nil
@@ -85,7 +90,7 @@ func (e *AESEngine) LoadToken(token string) (newtoken string, data []byte, err e
 	}
 	return nt, d.Data, nil
 }
-func (e *AESEngine) UpdateToken(token string, data []byte, maxliftime int64) (newtoken string, err error) {
+func (e *AESEngine) SaveToken(token string, data []byte, maxliftime int64) (newtoken string, err error) {
 	aesdata := aesEngineData{
 		LastActive: time.Now().Unix(),
 		Data:       data,

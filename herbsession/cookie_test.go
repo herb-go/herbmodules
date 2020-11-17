@@ -86,8 +86,8 @@ func TestCookie(t *testing.T) {
 			Name: "session",
 		},
 	}
-	s.AddInstaller(c)
-	var app = middleware.New(s.MustInstallByID(InstallerIDCookie))
+	s.Installer = c
+	var app = middleware.New(s.Install())
 
 	app.Handle(newTestMux(s))
 	server := httptest.NewServer(app)

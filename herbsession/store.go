@@ -16,27 +16,11 @@ type Store struct {
 	AutoStart   bool
 	Engine      Engine
 	MaxLifetime int64
-	Installers  []Installer
+	Installer   Installer
 }
 
-func (s *Store) AddInstaller(i Installer) {
-	s.Installers = append(s.Installers, i)
-}
-
-func (s *Store) MustInstall() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if len(s.Installers) == 0 {
-		panic(ErrInstallerNotFound)
-	}
-	return s.Installers[0].InstallerMiddleware(s)
-}
-
-func (s *Store) MustInstallByID(id InstallerID) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	for _, v := range s.Installers {
-		if v.InstallerID() == id {
-			return v.InstallerMiddleware(s)
-		}
-	}
-	panic(ErrInstallerNotFound)
+func (s *Store) Install() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return s.Installer.InstallerMiddleware(s)
 }
 
 func (s *Store) StartSession() (string, *Session, error) {
@@ -83,7 +67,7 @@ func (s *Store) SaveSession(session *Session) (err error) {
 	if err != nil {
 		return err
 	}
-	newtoken, err := s.Engine.UpdateToken(session.Token(), data, s.MaxLifetime)
+	newtoken, err := s.Engine.SaveToken(session.Token(), data, s.MaxLifetime)
 	if err != nil {
 		return err
 	}
