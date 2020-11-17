@@ -33,9 +33,6 @@ func (c *Cookie) InstallerMiddleware(s *Store) func(w http.ResponseWriter, r *ht
 		next(middleware.WrapResponseWriter(writer), r)
 	}
 }
-func (c *Cookie) InstallerID() InstallerID {
-	return InstallerIDCookie
-}
 
 type cookiewriter struct {
 	store   *Store
