@@ -1,4 +1,4 @@
-package herbsession
+package httpsession
 
 import (
 	"crypto/rand"
@@ -89,4 +89,42 @@ func (e *KVEngine) RevokeToken(token string) (err error) {
 }
 func (e *KVEngine) DynamicToken() bool {
 	return false
+}
+func (e *KVEngine) Close() error {
+	return e.Database.Close()
+}
+
+type KVEngineConfig struct {
+	kvdb.Config
+	TokenSize int
+	Timeout   int64
+}
+
+func (c *KVEngineConfig) ApplyTo(e *KVEngine) error {
+	db := kvdb.New()
+	err := c.Config.ApplyTo(db)
+	if err != nil {
+		return err
+	}
+	e.Database = db
+	e.TokenSize = c.TokenSize
+	e.Timeout = c.Timeout
+	return nil
+}
+
+func EngineFactoryKV(loader func(v interface{}) error) (Engine, error) {
+	e := &KVEngine{}
+	c := &KVEngineConfig{}
+	err := loader(c)
+	if err != nil {
+		return nil, err
+	}
+	err = c.ApplyTo(e)
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+func init() {
+	RegisterEngine(EngineNameKV, EngineFactoryKV)
 }

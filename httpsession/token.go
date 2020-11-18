@@ -1,3 +1,3 @@
-package herbsession
+package httpsession
 
 const TokenEmpty = ""

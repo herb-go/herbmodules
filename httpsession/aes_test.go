@@ -1,4 +1,4 @@
-package herbsession
+package httpsession
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package herbsession
+package httpsession
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"github.com/herb-go/herb/service/httpservice/httpcookie"
 )
 
-var InstallerIDCookie = InstallerID("cookie")
+var InstallerNameCookie = InstallerName("cookie")
 
 type Cookie struct {
 	Config httpcookie.Config
@@ -74,4 +74,16 @@ func (w *cookiewriter) Write(data []byte) (int, error) {
 		w.WriteHeader(200)
 	}
 	return w.ResponseWriter.Write(data)
+}
+
+func InstallerFactoryCookie(loader func(v interface{}) error) (Installer, error) {
+	c := &Cookie{}
+	err := loader(c)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+func init() {
+	RegisterInstaller(InstallerNameCookie, InstallerFactoryCookie)
 }

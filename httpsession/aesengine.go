@@ -1,4 +1,4 @@
-package herbsession
+package httpsession
 
 import (
 	"time"
@@ -113,4 +113,19 @@ func (e *AESEngine) DynamicToken() bool {
 }
 func (e *AESEngine) SessionTimeout() int64 {
 	return e.Timeout
+}
+
+func (e *AESEngine) Close() error {
+	return nil
+}
+func EngineFactoryAES(loader func(v interface{}) error) (Engine, error) {
+	e := &AESEngine{}
+	err := loader(e)
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+func init() {
+	RegisterEngine(EngineNameAES, EngineFactoryAES)
 }
