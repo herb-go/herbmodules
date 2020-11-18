@@ -10,10 +10,8 @@ import (
 var EngineNameKV = EngineName("keyvalue")
 
 type KVEngine struct {
-	Database           *kvdb.Database
-	TokenSize          int
-	Timeout            int64
-	LastActiveInterval int64
+	Database  *kvdb.Database
+	TokenSize int
 }
 
 func (e *KVEngine) EngineName() EngineName {
@@ -26,12 +24,6 @@ func (e *KVEngine) NewToken() (token string, err error) {
 		return "", nil
 	}
 	return base64.StdEncoding.EncodeToString(tokendata), nil
-}
-func (e *KVEngine) SessionTimeout() int64 {
-	if e.Timeout <= 0 {
-		return 0
-	}
-	return e.Timeout
 }
 
 func (e *KVEngine) LoadToken(token string) (newtoken string, data []byte, err error) {
@@ -64,7 +56,6 @@ func (e *KVEngine) Stop() error {
 type KVEngineConfig struct {
 	kvdb.Config
 	TokenSize int
-	Timeout   int64
 }
 
 func (c *KVEngineConfig) ApplyTo(e *KVEngine) error {
@@ -75,7 +66,6 @@ func (c *KVEngineConfig) ApplyTo(e *KVEngine) error {
 	}
 	e.Database = db
 	e.TokenSize = c.TokenSize
-	e.Timeout = c.Timeout
 	return nil
 }
 
