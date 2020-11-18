@@ -28,10 +28,9 @@ func TestStore(t *testing.T) {
 	var newsession *Session
 	var data []byte
 	var token string
-	var lastactive int64
 	var e = newTestAESEngine()
-	e.Timeout = 100
 	s = newTestStore()
+	s.Timeout = 100
 	s.MaxLifetime = 2
 	s.Engine = e
 	token, session, err = s.StartSession()
@@ -62,11 +61,6 @@ func TestStore(t *testing.T) {
 		t.Fatal()
 	}
 	if bytes.Compare(data, []byte("testdata")) != 0 {
-		t.Fatal()
-	}
-	lastactive, err = s.SessionLastActive(newsession.Token())
-
-	if err != nil || lastactive-time.Now().Unix() > 1 {
 		t.Fatal()
 	}
 	err = s.RevokeSession(newsession.Token())

@@ -1,15 +1,19 @@
 package httpsession
 
 type Config struct {
-	AutoStart   bool
-	Engine      EngineConfig
-	MaxLifetime int64
-	Installer   *InstallerConfig
+	AutoStart          bool
+	Engine             EngineConfig
+	MaxLifetime        int64
+	Timeout            int64
+	LastActiveInterval int64
+	Installer          *InstallerConfig
 }
 
 func (c *Config) ApplyTo(s *Store) error {
 	s.AutoStart = c.AutoStart
 	s.MaxLifetime = c.MaxLifetime
+	s.Timeout = c.Timeout
+	s.LastActiveInterval = c.LastActiveInterval
 	e, err := c.Engine.CreateEngine()
 	if err != nil {
 		return err

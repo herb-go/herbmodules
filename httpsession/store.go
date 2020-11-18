@@ -12,11 +12,13 @@ import (
 type SessionName string
 
 type Store struct {
-	Name        SessionName
-	AutoStart   bool
-	Engine      Engine
-	MaxLifetime int64
-	Installer   Installer
+	Name               SessionName
+	AutoStart          bool
+	Engine             Engine
+	MaxLifetime        int64
+	Timeout            int64
+	LastActiveInterval int64
+	Installer          Installer
 }
 
 func (s *Store) Install() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -33,8 +35,12 @@ func (s *Store) StartSession() (string, *Session, error) {
 	session.MarkAsUpdated()
 	session.token.Store(t)
 	now := time.Now().Unix()
-	session.expiredAt = now + s.MaxLifetime
-	session.createdAt = now
+	expiredAt := now + s.MaxLifetime
+	createdAt := now
+	lastactive := now
+	session.expiredAt = &expiredAt
+	session.createdAt = &createdAt
+	session.lastactive = &lastactive
 	return t, session, nil
 }
 
@@ -48,11 +54,19 @@ func (s *Store) LoadSession(token string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	if sessiondata.ExpiredAt < time.Now().Unix() {
+	now := time.Now().Unix()
+	if sessiondata.ExpiredAt < now {
+		return nil, herbdata.ErrNotFound
+	}
+	if s.Timeout > 0 && sessiondata.LastActive+s.Timeout < now {
 		return nil, herbdata.ErrNotFound
 	}
 	session := newSession()
 	session.MarkAsStarted()
+	if s.Timeout > 0 && sessiondata.LastActive+s.LastActiveInterval < now {
+		sessiondata.LastActive = now
+		session.MarkAsUpdated()
+	}
 	session.setdata(sessiondata)
 	session.token.Store(t)
 	session.loadedFrom = token
@@ -76,10 +90,6 @@ func (s *Store) SaveSession(session *Session) (err error) {
 }
 func (s *Store) RevokeSession(token string) (err error) {
 	return s.Engine.RevokeToken(token)
-}
-
-func (s *Store) SessionLastActive(token string) (int64, error) {
-	return s.Engine.TokenLastActive(token)
 }
 
 func (s *Store) RequestSession(r *http.Request) (session *Session) {
@@ -138,7 +148,12 @@ func (s *Store) SetRequestSession(r **http.Request, session *Session) {
 	req := (*r).WithContext(ctx)
 	*r = req
 }
-
+func (s *Store) Start() error {
+	return s.Engine.Start()
+}
+func (s *Store) Stop() error {
+	return s.Engine.Stop()
+}
 func New() *Store {
 	return &Store{}
 }

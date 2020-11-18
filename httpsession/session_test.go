@@ -90,7 +90,7 @@ func TestSession(t *testing.T) {
 	if err != herbdata.ErrNotFound {
 		t.Fatal(data, err)
 	}
-	if s.expiredAt != 0 || s.createdAt != 0 {
+	if *s.expiredAt != 0 || *s.createdAt != 0 {
 		t.Fatal(s)
 	}
 	s.setdata(sd)
@@ -98,7 +98,7 @@ func TestSession(t *testing.T) {
 	if err != nil || bytes.Compare(data, []byte("testdata")) != 0 {
 		t.Fatal(data, err)
 	}
-	if s.expiredAt != 2 || s.createdAt != 1 {
+	if *s.expiredAt != 2 || *s.createdAt != 1 {
 		t.Fatal(s)
 	}
 	sd2 := s.getdata()

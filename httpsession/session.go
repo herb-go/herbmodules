@@ -13,10 +13,11 @@ type SessionValue struct {
 }
 
 type SessionData struct {
-	Data      []*SessionValue
-	CreatedAt int64
-	ExpiredAt int64
-	Temporay  bool
+	Data       []*SessionValue
+	CreatedAt  int64
+	ExpiredAt  int64
+	Temporay   bool
+	LastActive int64
 }
 
 func newSessionData() *SessionData {
@@ -24,8 +25,9 @@ func newSessionData() *SessionData {
 }
 
 type Session struct {
-	createdAt  int64
-	expiredAt  int64
+	createdAt  *int64
+	expiredAt  *int64
+	lastactive *int64
 	data       sync.Map
 	updated    *int32
 	token      atomic.Value
@@ -35,8 +37,9 @@ type Session struct {
 }
 
 func (s *Session) setdata(data *SessionData) {
-	s.createdAt = data.CreatedAt
-	s.expiredAt = data.ExpiredAt
+	atomic.StoreInt64(s.createdAt, data.CreatedAt)
+	atomic.StoreInt64(s.expiredAt, data.ExpiredAt)
+	atomic.StoreInt64(s.lastactive, data.LastActive)
 	for _, v := range data.Data {
 		s.data.Store(v.Key, v.Value)
 	}
@@ -48,8 +51,9 @@ func (s *Session) setdata(data *SessionData) {
 }
 func (s *Session) getdata() *SessionData {
 	var data = newSessionData()
-	data.CreatedAt = s.createdAt
-	data.ExpiredAt = s.expiredAt
+	data.CreatedAt = atomic.LoadInt64(s.createdAt)
+	data.LastActive = atomic.LoadInt64(s.lastactive)
+	data.ExpiredAt = atomic.LoadInt64(s.expiredAt)
 	s.data.Range(func(key interface{}, val interface{}) bool {
 		data.Data = append(data.Data, &SessionValue{Key: key.(string), Value: val.([]byte)})
 		return true
@@ -140,9 +144,16 @@ func newSession() *Session {
 	updated := int32(0)
 	temporay := int32(0)
 	started := int32(0)
+	createdAt := int64(0)
+	expiredAt := int64(0)
+	lastactive := int64(0)
+
 	return &Session{
-		updated:  &updated,
-		started:  &started,
-		temporay: &temporay,
+		updated:    &updated,
+		started:    &started,
+		temporay:   &temporay,
+		createdAt:  &createdAt,
+		expiredAt:  &expiredAt,
+		lastactive: &lastactive,
 	}
 }
