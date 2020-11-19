@@ -24,13 +24,9 @@ func TestKVEngine(t *testing.T) {
 	db.Driver = driver
 	e = &KVEngine{
 		TokenSize: 256,
-		Timeout:   0,
 		Database:  db,
 	}
 	if e.DynamicToken() {
-		t.Fatal()
-	}
-	if e.SessionTimeout() != 0 {
 		t.Fatal()
 	}
 	token, err = e.NewToken()
@@ -67,7 +63,6 @@ func TestKVEngineNotFound(t *testing.T) {
 	db.Driver = driver
 	e = &KVEngine{
 		TokenSize: 256,
-		Timeout:   120,
 		Database:  db,
 	}
 	_, _, err = e.LoadToken("!notexist")

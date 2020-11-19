@@ -54,13 +54,14 @@ func (e *KVEngine) Stop() error {
 }
 
 type KVEngineConfig struct {
-	kvdb.Config
+	DBDriver  string
+	DBConfig  func(interface{}) error `config:", lazyload"`
 	TokenSize int
 }
 
 func (c *KVEngineConfig) ApplyTo(e *KVEngine) error {
 	db := kvdb.New()
-	err := c.Config.ApplyTo(db)
+	err := kvdb.Apply(db, c.DBDriver, c.DBConfig)
 	if err != nil {
 		return err
 	}

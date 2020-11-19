@@ -52,7 +52,7 @@ func (s *Store) LoadSession(token string) (*Session, error) {
 	sessiondata := newSessionData()
 	err = msgpack.Unmarshal(data, sessiondata)
 	if err != nil {
-		return nil, err
+		return nil, herbdata.ErrNotFound
 	}
 	now := time.Now().Unix()
 	if sessiondata.ExpiredAt < now {
@@ -86,6 +86,7 @@ func (s *Store) SaveSession(session *Session) (err error) {
 		return err
 	}
 	session.SetToken(newtoken)
+	session.markAsNotUpdated()
 	return nil
 }
 func (s *Store) RevokeSession(token string) (err error) {
@@ -114,7 +115,7 @@ func (s *Store) MustInstallSessionToRequest(rpointer **http.Request, token strin
 	var session *Session
 	if token != "" {
 		session, err = s.LoadSession(token)
-		if err != nil {
+		if err != nil && err != herbdata.ErrNotFound {
 			panic(err)
 		}
 	}

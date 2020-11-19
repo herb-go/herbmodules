@@ -10,5 +10,5 @@ var DefaultValidator = httpinfo.ValidatorFunc(func(r *http.Request, resp *httpin
 	if !resp.Written {
 		return true, nil
 	}
-	return resp.StatusCode < 500, nil
+	return resp.StatusCode >= 200 && resp.StatusCode < 500, nil
 })

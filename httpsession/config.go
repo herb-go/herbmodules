@@ -2,11 +2,13 @@ package httpsession
 
 type Config struct {
 	AutoStart          bool
-	Engine             EngineConfig
+	Engine             EngineName
+	EngineConfig       func(interface{}) error `config:", lazyload"`
 	MaxLifetime        int64
 	Timeout            int64
 	LastActiveInterval int64
-	Installer          *InstallerConfig
+	Installer          InstallerName
+	InstallerConfig    func(interface{}) error `config:", lazyload"`
 }
 
 func (c *Config) ApplyTo(s *Store) error {
@@ -14,35 +16,17 @@ func (c *Config) ApplyTo(s *Store) error {
 	s.MaxLifetime = c.MaxLifetime
 	s.Timeout = c.Timeout
 	s.LastActiveInterval = c.LastActiveInterval
-	e, err := c.Engine.CreateEngine()
+	e, err := CreateEngine(c.Engine, c.EngineConfig)
 	if err != nil {
 		return err
 	}
 	s.Engine = e
-	if c.Installer != nil {
-		i, err := c.Installer.CreateInstaller()
+	if c.Installer != "" {
+		i, err := CreateInstaller(c.Installer, c.InstallerConfig)
 		if err != nil {
 			return err
 		}
 		s.Installer = i
 	}
 	return nil
-}
-
-type InstallerConfig struct {
-	Name   InstallerName
-	Config func(v interface{}) error `config:", lazyload"`
-}
-
-func (c *InstallerConfig) CreateInstaller() (Installer, error) {
-	return CreateInstaller(c.Name, c.Config)
-}
-
-type EngineConfig struct {
-	Name   EngineName
-	Config func(v interface{}) error `config:", lazyload"`
-}
-
-func (c *EngineConfig) CreateEngine() (Engine, error) {
-	return CreateEngine(c.Name, c.Config)
 }
