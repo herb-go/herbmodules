@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -34,6 +35,7 @@ func DefaultNotFoundAction(w http.ResponseWriter, r *http.Request) {
 
 //Auth auth service main struct
 type Auth struct {
+	Debug           bool
 	providerManager ProviderManager
 	//Host auth service host.For example,https://www.example.com
 	Host string
@@ -187,6 +189,9 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 			if provider != nil {
 				result, err := provider.AuthRequest(r)
 				if err == ErrAuthParamsError {
+					if a.Debug {
+						fmt.Println(ErrAuthParamsError.Error())
+					}
 					a.NotFoundAction(w, r)
 					return
 				}
@@ -198,6 +203,9 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 					a.SetResult(r, result)
 					SuccessAction(w, r)
 					return
+				}
+				if a.Debug {
+					fmt.Println("auth:user not found")
 				}
 			}
 		}
