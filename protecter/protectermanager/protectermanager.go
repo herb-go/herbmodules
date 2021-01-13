@@ -20,7 +20,7 @@ func Register(name string) *protecter.Protecter {
 		p = protecter.New()
 		protecters[name] = p
 		if Debug {
-			fmt.Printf("Protecteer [%s] registered\n", name)
+			fmt.Printf("Protecter [%s] registered\n", name)
 		}
 	}
 	return p
