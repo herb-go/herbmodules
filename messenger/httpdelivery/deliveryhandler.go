@@ -12,13 +12,12 @@ import (
 	"github.com/herb-go/notification/notificationdelivery"
 )
 
-type DeliveryHandler struct {
-	Center notificationdelivery.DeliveryCenter
-}
-
 type DeliveryResult struct {
 	Status notificationdelivery.DeliveryStatus `json:"status"`
 	Msg    string                              `json:"msg"`
+}
+type DeliveryHandler struct {
+	Center notificationdelivery.DeliveryCenter
 }
 
 func (h *DeliveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
