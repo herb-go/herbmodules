@@ -27,8 +27,9 @@ type PublisherHandler struct {
 func LoadNotificationHeader(h http.Header) notification.Header {
 	result := notification.NewHeader()
 	for k := range h {
-		if strings.HasPrefix(k, "notification-") {
-			result.Set(strings.TrimPrefix(k, "notification-"), h.Get(k))
+		name := strings.ToLower(k)
+		if strings.HasPrefix(name, "notification-") {
+			result.Set(strings.TrimPrefix(name, "notification-"), h.Get(k))
 		}
 	}
 	return result
