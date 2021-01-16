@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/herb-go/notification/notificationdelivery/notificationqueue"
 
@@ -22,14 +24,15 @@ type PublisherResult struct {
 
 type PublisherHandler struct {
 	Publisher *notificationqueue.Publisher
+	Builder   messenger.NotificationBuilder
 }
 
 func LoadNotificationHeader(h http.Header) notification.Header {
 	result := notification.NewHeader()
 	for k := range h {
 		name := strings.ToLower(k)
-		if strings.HasPrefix(name, "notification-") {
-			result.Set(strings.TrimPrefix(name, "notification-"), h.Get(k))
+		if strings.HasPrefix(name, messenger.NotificationHeaderPrefix) {
+			result.Set(strings.TrimPrefix(name, messenger.NotificationHeaderPrefix), h.Get(k))
 		}
 	}
 	return result
@@ -77,15 +80,29 @@ func (h *PublisherHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	n.Delivery = p
 	n.Content = content
 	n.Header = LoadNotificationHeader(r.Header)
+	if h.Builder != nil {
+		h.Builder(r, n)
+	}
 	nid, published, err := h.Publisher.PublishNotification(n)
 	if err != nil {
 		panic(err)
 	}
+	ttlheader := r.Header.Get(messenger.HeaderTTL)
+	if ttlheader != "" {
+		i, err := strconv.Atoi(ttlheader)
+		if err == nil {
+			n.ExpiredTime = time.Now().Add(time.Duration(i) * time.Second).Unix()
+		}
+	}
+	if n.ExpiredTime <= 0 {
+		n.ExpiredTime = time.Now().Add(notification.SuggestedNotificationTTL).Unix()
+	}
 	messenger.MustRenderJSON(w, &PublisherResult{NotificationID: nid, Published: published}, 200)
 }
 
-func CreatePublishHandler(publisher *notificationqueue.Publisher) *PublisherHandler {
+func CreatePublishHandler(publisher *notificationqueue.Publisher, builder messenger.NotificationBuilder) *PublisherHandler {
 	return &PublisherHandler{
 		Publisher: publisher,
+		Builder:   builder,
 	}
 }
