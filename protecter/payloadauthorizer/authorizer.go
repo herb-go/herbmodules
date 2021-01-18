@@ -1,7 +1,10 @@
 package payloadauthorizer
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/herb-go/herbsecurity/authorize/role"
 	"github.com/herb-go/herbsecurity/authorize/role/roleparser"
@@ -36,8 +39,16 @@ func (a *Authorizer) WithPolicy(r role.Policy) *Authorizer {
 	a.PolicyLoader = protecter.RolePolicyLoader(r)
 	return a
 }
-func (a *Authorizer) WithPolicyLoader(l protecter.PolicyLoader) *Authorizer {
+func (a *Authorizer) With(l protecter.PolicyLoader) *Authorizer {
 	a.PolicyLoader = l
+	return a
+}
+func (a *Authorizer) WithAny(pls ...protecter.PolicyLoader) *Authorizer {
+	a.PolicyLoader = Any(pls...)
+	return a
+}
+func (a *Authorizer) WithAll(pls ...protecter.PolicyLoader) *Authorizer {
+	a.PolicyLoader = All(pls...)
 	return a
 }
 func (a *Authorizer) ServeMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -69,5 +80,99 @@ func New() *Authorizer {
 		Key:          protecter.DefaultKey,
 		PolicyLoader: DefaultPolicyLoader,
 		OnDeny:       DefaultOnDeny,
+	}
+}
+
+func Any(pls ...protecter.PolicyLoader) protecter.PolicyLoader {
+	return protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+		var err error
+		ps := make([]role.Policy, len(pls))
+		for k := range pls {
+			ps[k], err = pls[k].LoadPolicy(r)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return role.Any(ps...), nil
+	})
+}
+
+func Not(pl protecter.PolicyLoader) protecter.PolicyLoader {
+	return protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+		p, err := pl.LoadPolicy(r)
+		if err != nil {
+			return nil, err
+		}
+		return role.Not(p), nil
+	})
+}
+
+func All(pls ...protecter.PolicyLoader) protecter.PolicyLoader {
+	return protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+		var err error
+		ps := make([]role.Policy, len(pls))
+		for k := range pls {
+			ps[k], err = pls[k].LoadPolicy(r)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return role.All(ps...), nil
+	})
+}
+
+func MustParse(str string) protecter.PolicyLoader {
+	p, err := roleparser.Parse(str)
+	if err != nil {
+		panic(err)
+	}
+	return protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+		return p, nil
+	})
+}
+
+func makeToken(index int) string {
+	return fmt.Sprintf("{{%d}}", index)
+}
+
+type replacer struct {
+	token string
+	load  func(r *http.Request) (string, error)
+}
+
+func MustParseWith(pattern string, paramsloaders ...func(r *http.Request) (string, error)) protecter.PolicyLoader {
+	var replacers = []*replacer{}
+	for k := range paramsloaders {
+		replacers = append(replacers, &replacer{
+			token: makeToken(k),
+			load:  paramsloaders[k],
+		})
+	}
+	return protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+		var replacements = make([]string, 0, len(paramsloaders)*2)
+		for k := range replacers {
+			value, err := replacers[k].load(r)
+			if err != nil {
+				return nil, err
+			}
+			replacements = append(replacements, replacers[k].token, url.PathEscape(value))
+		}
+		return roleparser.Parse(strings.NewReplacer(replacements...).Replace(pattern))
+	})
+}
+
+var pathsep = byte('/')
+
+func ParamFilename(r *http.Request) (string, error) {
+	i := strings.LastIndexByte(r.URL.Path, pathsep)
+	if i < 0 {
+		return r.URL.Path, nil
+	}
+	return r.URL.Path[i+1:], nil
+}
+
+func NewQueryParam(field string) func(r *http.Request) (string, error) {
+	return func(r *http.Request) (string, error) {
+		return r.Header.Get(field), nil
 	}
 }
