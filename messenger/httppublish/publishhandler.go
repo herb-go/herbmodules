@@ -73,7 +73,7 @@ func (h *PublisherHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	if len(invalids) > 0 {
-		messenger.MustRenderInvalidContents(w, invalids)
+		messenger.MustRenderInvalidFields(w, invalids...)
 		return
 	}
 	n := notification.New()
@@ -82,10 +82,6 @@ func (h *PublisherHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	n.Header = LoadNotificationHeader(r.Header)
 	if h.Builder != nil {
 		h.Builder(r, n)
-	}
-	nid, published, err := h.Publisher.PublishNotification(n)
-	if err != nil {
-		panic(err)
 	}
 	ttlheader := r.Header.Get(messenger.HeaderTTL)
 	if ttlheader != "" {
@@ -97,6 +93,11 @@ func (h *PublisherHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if n.ExpiredTime <= 0 {
 		n.ExpiredTime = time.Now().Add(notification.SuggestedNotificationTTL).Unix()
 	}
+	nid, published, err := h.Publisher.PublishNotification(n)
+	if err != nil {
+		panic(err)
+	}
+
 	messenger.MustRenderJSON(w, &PublisherResult{NotificationID: nid, Published: published}, 200)
 }
 

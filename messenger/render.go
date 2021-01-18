@@ -2,8 +2,12 @@ package messenger
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 )
+
+var ResultOK = []byte(`{"status":"ok"}`)
 
 func MustRenderJSON(w http.ResponseWriter, data interface{}, code int) {
 	bs, err := json.Marshal(data)
@@ -18,20 +22,41 @@ func MustRenderJSON(w http.ResponseWriter, data interface{}, code int) {
 	}
 }
 
-var InvalidContentMessage = "invalid content"
+var InvalidFieldMessage = "invalid content"
 
-type InvalidContentField struct {
+type InvalidField struct {
 	Field   string `json:"field"`
 	Message string `json:"msg"`
 }
 
-func MustRenderInvalidContents(w http.ResponseWriter, invalids []string) {
-	result := make([]*InvalidContentField, len(invalids))
+func MustRenderInvalidFields(w http.ResponseWriter, invalids ...string) {
+	result := make([]*InvalidField, len(invalids))
 	for k, v := range invalids {
-		result[k] = &InvalidContentField{
+		result[k] = &InvalidField{
 			Field:   v,
-			Message: InvalidContentMessage,
+			Message: InvalidFieldMessage,
 		}
 	}
 	MustRenderJSON(w, result, 422)
+}
+
+var UnsupportedConditionsMessage = "unsupported conditions[ %s ]"
+
+func MustRenderUnsupportedConditions(w http.ResponseWriter, unsupported []string) {
+	result := []*InvalidField{
+		&InvalidField{
+			Field:   "conditions",
+			Message: fmt.Sprintf(UnsupportedConditionsMessage, strings.Join(unsupported, " , ")),
+		},
+	}
+	MustRenderJSON(w, result, 422)
+}
+
+func MustRenderOK(w http.ResponseWriter) {
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(200)
+	_, err := w.Write(ResultOK)
+	if err != nil {
+		panic(err)
+	}
 }

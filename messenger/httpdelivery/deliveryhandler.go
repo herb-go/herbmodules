@@ -56,7 +56,7 @@ func (h *DeliveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	if len(invalids) > 0 {
-		messenger.MustRenderInvalidContents(w, invalids)
+		messenger.MustRenderInvalidFields(w, invalids...)
 		return
 	}
 	status, receipt, err := d.Deliver(content)
