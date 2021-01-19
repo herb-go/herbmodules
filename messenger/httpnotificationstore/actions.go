@@ -111,3 +111,13 @@ func CreateRemoveAction(storeloader func() notification.Store) http.Handler {
 		messenger.MustRenderOK(w)
 	})
 }
+
+func CreateStoreSupportedConditionsAction(storeloader func() notification.Store) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		supported, err := storeloader().SupportedConditions()
+		if err != nil {
+			panic(err)
+		}
+		messenger.MustRenderJSON(w, supported, 200)
+	})
+}
