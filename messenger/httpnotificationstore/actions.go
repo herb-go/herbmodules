@@ -98,7 +98,7 @@ func CreateRemoveAction(storeloader func() notification.Store) http.Handler {
 			return
 		}
 		if nid.NotificationID == "" {
-			messenger.MustRenderInvalidFields(w, "notificationid")
+			messenger.MustRenderInvalidFields(w, "notification-id")
 			return
 		}
 		store := storeloader()

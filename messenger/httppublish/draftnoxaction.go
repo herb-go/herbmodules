@@ -31,7 +31,7 @@ func CreatePublishDraftAction(p *notificationqueue.Publisher) http.Handler {
 			return
 		}
 		if nid.NotificationID == "" {
-			messenger.MustRenderInvalidFields(w, "notificationid")
+			messenger.MustRenderInvalidFields(w, "notification-id")
 			return
 		}
 		_, err = p.PublishDraft(nid.NotificationID)

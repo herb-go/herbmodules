@@ -1,5 +1,5 @@
 package messenger
 
 type NotificationID struct {
-	NotificationID string `json:"notificationid"`
+	NotificationID string `json:"notification-id"`
 }
