@@ -18,7 +18,7 @@ import (
 )
 
 type PublisherResult struct {
-	NotificationID string `json:"notification_id"`
+	NotificationID string `json:"notification-id"`
 	Published      bool   `json:"published"`
 }
 

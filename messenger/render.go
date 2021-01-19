@@ -25,8 +25,8 @@ func MustRenderJSON(w http.ResponseWriter, data interface{}, code int) {
 var InvalidFieldMessage = "invalid content"
 
 type InvalidField struct {
-	Field   string `json:"field"`
-	Message string `json:"msg"`
+	Field   string `json:"Field"`
+	Message string `json:"Msg"`
 }
 
 func MustRenderInvalidFields(w http.ResponseWriter, invalids ...string) {
