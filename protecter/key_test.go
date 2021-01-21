@@ -200,10 +200,10 @@ func TestMiddlewareSuccess(t *testing.T) {
 }
 
 func TestRoles(t *testing.T) {
-	loader1 := RoleRolesLoader(role.NewPlainRoles("role1"))
-	loader2 := RoleRolesLoader(role.NewPlainRoles("role2"))
-	policy1 := RolePolicyLoader(role.NewPlainRoles("role1"))
-	policy2 := RolePolicyLoader(role.NewPlainRoles("role2"))
+	loader1 := RoleRolesLoader(role.New("role1"))
+	loader2 := RoleRolesLoader(role.New("role2"))
+	policy1 := RolePolicyLoader(role.New("role1"))
+	policy2 := RolePolicyLoader(role.New("role2"))
 	mux := &http.ServeMux{}
 	mux.Handle("/l1p1", middleware.New().Use(
 		RolesMiddleware(loader1),
