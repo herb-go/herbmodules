@@ -77,7 +77,20 @@ func CreateListStoreAction(storeloader func() receiptstore.ReceiptStore) http.Ha
 			messenger.MustRenderUnsupportedConditions(w, unsupported)
 			return
 		}
-		messenger.MustRenderJSON(w, MustList(options, store), 200)
+		c := options.Count
+		if c == 0 {
+			c = notification.DefaultStoreListLimit
+		}
+		options.Count = c + 1
+		result := MustList(options, store)
+		if len(result.Result) <= c {
+			result.Iter = ""
+			c = len(result.Result)
+		} else {
+			result.Iter = result.Result[c-1].ID
+		}
+		result.Result = result.Result[:c]
+		messenger.MustRenderJSON(w, result, 200)
 	})
 }
 

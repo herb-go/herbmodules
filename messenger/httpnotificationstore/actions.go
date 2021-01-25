@@ -73,7 +73,20 @@ func CreateListStoreAction(storeloader func() notification.Store) http.Handler {
 			messenger.MustRenderUnsupportedConditions(w, unsupported)
 			return
 		}
-		messenger.MustRenderJSON(w, messenger.MustList(options, store), 200)
+		c := options.Count
+		if c == 0 {
+			c = notification.DefaultStoreListLimit
+		}
+		options.Count = c + 1
+		result := messenger.MustList(options, store)
+		if len(result.Result) <= c {
+			result.Iter = ""
+			c = len(result.Result)
+		} else {
+			result.Iter = result.Result[c-1].ID
+		}
+		result.Result = result.Result[:c]
+		messenger.MustRenderJSON(w, result, 200)
 	})
 }
 
