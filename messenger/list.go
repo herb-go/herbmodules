@@ -61,22 +61,11 @@ func (o *ListOptions) MustCount(s notification.Searchable) *CountResult {
 }
 func MustList(o *ListOptions, s notification.Store) *ListResult {
 
-	c := o.Count
-	if c == 0 {
-		c = notification.DefaultStoreListLimit
-	}
-	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, c+1)
+	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, o.Count)
 	if err != nil {
 		panic(err)
 	}
-
-	if len(list) <= c {
-		iter = ""
-		c = len(list)
-	} else {
-		iter = list[c-1].ID
-	}
-	return CreateListResult(list[:c], iter)
+	return CreateListResult(list, iter)
 }
 func NewListOptions() *ListOptions {
 	return &ListOptions{}

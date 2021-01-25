@@ -111,22 +111,12 @@ type ListResult struct {
 }
 
 func MustList(o *messenger.ListOptions, s receiptstore.ReceiptStore) *ListResult {
-	c := o.Count
-	if c == 0 {
-		c = notification.DefaultStoreListLimit
-	}
-	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, c+1)
+
+	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, o.Count)
 	if err != nil {
 		panic(err)
 	}
-
-	if len(list) <= c {
-		iter = ""
-		c = len(list)
-	} else {
-		iter = list[c-1].Notification.ID
-	}
-	return CreateListResult(list[:c], iter)
+	return CreateListResult(list, iter)
 }
 
 func CreateListResult(receipts []*notificationqueue.Receipt, iter string) *ListResult {
