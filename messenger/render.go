@@ -44,7 +44,7 @@ var UnsupportedConditionsMessage = "unsupported conditions[ %s ]"
 
 func MustRenderUnsupportedConditions(w http.ResponseWriter, unsupported []string) {
 	result := []*InvalidField{
-		&InvalidField{
+		{
 			Field:   "conditions",
 			Message: fmt.Sprintf(UnsupportedConditionsMessage, strings.Join(unsupported, " , ")),
 		},

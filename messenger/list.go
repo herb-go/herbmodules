@@ -26,7 +26,7 @@ func (o *ListOptions) ConvertConditions() []*notification.Condition {
 	}
 	return conds
 }
-func (o *ListOptions) MustCheckUnsupported(store notification.Store) []string {
+func (o *ListOptions) MustCheckUnsupported(store notification.Searchable) []string {
 	var result []string
 	supported, err := store.SupportedConditions()
 	if err != nil {
@@ -43,15 +43,7 @@ func (o *ListOptions) MustCheckUnsupported(store notification.Store) []string {
 	}
 	return result
 }
-func (o *ListOptions) MustList(s notification.Store) *ListResult {
-
-	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, o.Count)
-	if err != nil {
-		panic(err)
-	}
-	return CreateListResult(list, iter)
-}
-func (o *ListOptions) MustCount(s notification.Store) *CountResult {
+func (o *ListOptions) MustCount(s notification.Searchable) *CountResult {
 	conds := make([]*notification.Condition, len(*o.Conditions))
 	for k, v := range *o.Conditions {
 		conds[k] = &notification.Condition{
@@ -67,7 +59,14 @@ func (o *ListOptions) MustCount(s notification.Store) *CountResult {
 		Count: count,
 	}
 }
+func MustList(o *ListOptions, s notification.Store) *ListResult {
 
+	list, iter, err := s.List(o.ConvertConditions(), o.Iter, o.Asc, o.Count)
+	if err != nil {
+		panic(err)
+	}
+	return CreateListResult(list, iter)
+}
 func NewListOptions() *ListOptions {
 	return &ListOptions{}
 }

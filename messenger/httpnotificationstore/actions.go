@@ -73,7 +73,7 @@ func CreateListStoreAction(storeloader func() notification.Store) http.Handler {
 			messenger.MustRenderUnsupportedConditions(w, unsupported)
 			return
 		}
-		messenger.MustRenderJSON(w, options.MustList(store), 200)
+		messenger.MustRenderJSON(w, messenger.MustList(options, store), 200)
 	})
 }
 
