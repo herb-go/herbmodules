@@ -163,7 +163,7 @@ func CreateFlushAction(storeloader func() receiptstore.ReceiptStore, recover fun
 		if d > 0 {
 			go func() {
 				defer recover()
-				retention := time.Now().Add(time.Duration(d) * 24 * time.Hour)
+				retention := time.Now().Add(-time.Duration(d) * 24 * time.Hour)
 				c := []*notification.Condition{
 					{
 						Keyword: notification.ConditionBeforeTimestamp,
@@ -181,7 +181,10 @@ func CreateFlushAction(storeloader func() receiptstore.ReceiptStore, recover fun
 						result := v
 						go func() {
 							defer recover()
-							s.Remove(result.Notification.ID)
+							_, err := s.Remove(result.Notification.ID)
+							if err != nil && !notification.IsErrNotificationIDNotFound(err) {
+								panic(err)
+							}
 						}()
 					}
 					if iter == "" {
