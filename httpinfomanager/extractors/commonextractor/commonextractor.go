@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/herb-go/herb/middleware/httpinfo"
 	"github.com/herb-go/herb/middleware/router"
@@ -147,6 +148,16 @@ var PathExtractorFactory = httpinfomanager.ExtractorFactoryFunc(func(loader func
 	return PathExtractor, nil
 })
 
+var FilenameExtractor = httpinfo.ExtractorFunc(func(r *http.Request) ([]byte, error) {
+	i := strings.LastIndexByte(r.URL.Path, '/')
+	if i < 0 {
+		return []byte(r.URL.Path), nil
+	}
+	return []byte(r.URL.Path[i+1:]), nil
+})
+var FilenameExtractorFactory = httpinfomanager.ExtractorFactoryFunc(func(loader func(v interface{}) error) (httpinfo.Extractor, error) {
+	return FilenameExtractor, nil
+})
 var HostExtractor = httpinfo.ExtractorFunc(func(r *http.Request) ([]byte, error) {
 	return []byte(r.Host), nil
 })
@@ -183,6 +194,7 @@ func RegsiterFactories() {
 	httpinfomanager.RegisterExtractorFactory("ip", IPAddressExtractorFactory)
 	httpinfomanager.RegisterExtractorFactory("method", MethodExtractorFactory)
 	httpinfomanager.RegisterExtractorFactory("path", PathExtractorFactory)
+	httpinfomanager.RegisterExtractorFactory("filename", FilenameExtractorFactory)
 	httpinfomanager.RegisterExtractorFactory("host", HostExtractorFactory)
 	httpinfomanager.RegisterExtractorFactory("user", UserExtractorFactory)
 	httpinfomanager.RegisterExtractorFactory("password", PasswordExtractorFactory)

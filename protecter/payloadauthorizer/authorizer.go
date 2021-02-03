@@ -160,19 +160,3 @@ func MustParseWith(pattern string, paramsloaders ...func(r *http.Request) (strin
 		return roleparser.Parse(strings.NewReplacer(replacements...).Replace(pattern))
 	})
 }
-
-var pathsep = byte('/')
-
-func ParamFilename(r *http.Request) (string, error) {
-	i := strings.LastIndexByte(r.URL.Path, pathsep)
-	if i < 0 {
-		return r.URL.Path, nil
-	}
-	return r.URL.Path[i+1:], nil
-}
-
-func NewQueryParam(field string) func(r *http.Request) (string, error) {
-	return func(r *http.Request) (string, error) {
-		return r.Header.Get(field), nil
-	}
-}

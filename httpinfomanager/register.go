@@ -168,9 +168,23 @@ func GetField(name string) (httpinfo.Field, error) {
 	}
 	return f, nil
 }
-
 func MustGetField(name string) httpinfo.Field {
 	f, err := GetField(name)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+func GetStringField(name string) (*httpinfo.StringField, error) {
+	f, err := GetField(name)
+	if err != nil {
+		return nil, err
+	}
+	return httpinfo.NewStringField(f), nil
+}
+
+func MustGetStringField(name string) *httpinfo.StringField {
+	f, err := GetStringField(name)
 	if err != nil {
 		panic(err)
 	}
