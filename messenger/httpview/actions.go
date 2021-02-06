@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/herb-go/notification/notificationdelivery"
+
 	"github.com/herb-go/herbtext"
 	"github.com/herb-go/notification"
 
@@ -84,6 +86,6 @@ func CreateSendAction(c notificationview.ViewCenter, sender notification.Sender)
 		if err != nil {
 			panic(err)
 		}
-		messenger.MustRenderOK(w)
+		messenger.MustRenderJSON(w, map[string]interface{}{"status": notificationdelivery.DeliveryStatusSuccess}, 200)
 	})
 }
