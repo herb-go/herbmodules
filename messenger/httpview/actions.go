@@ -82,6 +82,11 @@ func CreateSendAction(c notificationview.ViewCenter, sender notification.Sender)
 		herbtext.MergeSet(msg, herbtext.Map(data))
 		n, err := view.Render(msg)
 		if err != nil {
+			if notification.IsErrInvalidContent(err) {
+				ce := err.(*notification.ErrInvalidContent)
+				messenger.MustRenderInvalidFields(w, ce.Fields...)
+				return
+			}
 			panic(err)
 		}
 		err = sender.Send(n)
