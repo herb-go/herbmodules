@@ -17,7 +17,7 @@ import (
 
 var ErrInvalidJSON = errors.New("invalid json")
 
-func renderRequest(c notificationview.ViewCenter, r *http.Request) (*notification.Notification, error) {
+func renderRequest(c notificationview.ViewCenter, b messenger.NotificationBuilder, r *http.Request) (*notification.Notification, error) {
 	p := r.URL.Path
 	if p[0] == '/' {
 		p = p[1:]
@@ -37,7 +37,12 @@ func renderRequest(c notificationview.ViewCenter, r *http.Request) (*notificatio
 	}
 	msg := notificationview.NewMessage()
 	herbtext.MergeSet(msg, herbtext.Map(data))
-	return view.Render(msg)
+	n, err := view.Render(msg)
+	if err != nil {
+		return nil, err
+	}
+	b(r, n)
+	return n, nil
 }
 
 func httpError(err error, w http.ResponseWriter, r *http.Request) bool {
@@ -58,13 +63,13 @@ func httpError(err error, w http.ResponseWriter, r *http.Request) bool {
 	}
 	return true
 }
-func CreateRenderAction(c notificationview.ViewCenter) http.Handler {
+func CreateRenderAction(c notificationview.ViewCenter, b messenger.NotificationBuilder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(405), 405)
 			return
 		}
-		n, err := renderRequest(c, r)
+		n, err := renderRequest(c, b, r)
 		if !httpError(err, w, r) {
 			return
 		}
@@ -72,13 +77,13 @@ func CreateRenderAction(c notificationview.ViewCenter) http.Handler {
 	})
 }
 
-func CreateSendAction(c notificationview.ViewCenter, sender notification.Sender) http.Handler {
+func CreateSendAction(c notificationview.ViewCenter, b messenger.NotificationBuilder, sender notification.Sender) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(405), 405)
 			return
 		}
-		n, err := renderRequest(c, r)
+		n, err := renderRequest(c, b, r)
 		if !httpError(err, w, r) {
 			return
 		}
