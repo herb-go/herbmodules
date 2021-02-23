@@ -83,11 +83,11 @@ func (h *PublisherHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.Builder != nil {
 		h.Builder(r, n)
 	}
-	ttlheader := r.Header.Get(messenger.HeaderTTL)
-	if ttlheader != "" {
-		i, err := strconv.Atoi(ttlheader)
+	expiredheader := r.Header.Get(messenger.HeaderExpired)
+	if expiredheader != "" {
+		i, err := strconv.ParseInt(expiredheader, 10, 64)
 		if err == nil {
-			n.ExpiredTime = time.Now().Add(time.Duration(i) * time.Second).Unix()
+			n.ExpiredTime = i
 		}
 	}
 	if n.ExpiredTime <= 0 {

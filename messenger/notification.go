@@ -14,7 +14,7 @@ type NotificationID struct {
 func MustRenderNotification(w http.ResponseWriter, n *notification.Notification) {
 	header := w.Header()
 	if n.ExpiredTime != 0 {
-		header.Set(HeaderTTL, strconv.FormatInt(n.ExpiredTime, 10))
+		header.Set(HeaderExpired, strconv.FormatInt(n.ExpiredTime, 10))
 	}
 	for k, v := range n.Header {
 		header.Set(NotificationHeaderPrefix+k, v)
