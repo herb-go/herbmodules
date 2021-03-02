@@ -37,3 +37,34 @@ func CreateListDeliveryServersAction(c notificationdelivery.DeliveryCenter) http
 		messenger.MustRenderJSON(w, output, 200)
 	})
 }
+
+type DeliveryServerFields struct {
+	Delivery     string `json:"delivery"`
+	DeliveryType string `json:"delivery-type"`
+	Fields       []*notificationdelivery.Field
+}
+
+func CreateListDeliveryServersFieldsAction(c notificationdelivery.DeliveryCenter) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, http.StatusText(405), 405)
+			return
+		}
+		list, err := c.List()
+		if err != nil {
+			panic(err)
+		}
+		output := make([]*DeliveryServerFields, 0, len(list))
+		for _, v := range list {
+			if !v.Disabled && len(v.ContentFields()) > 0 {
+				o := &DeliveryServerFields{
+					Delivery:     v.Delivery,
+					DeliveryType: v.DeliveryType(),
+					Fields:       v.ContentFields(),
+				}
+				output = append(output, o)
+			}
+		}
+		messenger.MustRenderJSON(w, output, 200)
+	})
+}
