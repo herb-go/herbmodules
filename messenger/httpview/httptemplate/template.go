@@ -31,8 +31,10 @@ type TemplateConfig struct {
 	Engine          string
 }
 type Template struct {
-	Config TemplateConfig
-	Data   map[string]string
+	Name        string
+	Description string
+	Config      TemplateConfig
+	Data        map[string]string
 }
 
 func (t *Template) toConfig() *templateview.Config {
@@ -54,8 +56,8 @@ func (t *Template) MustTOML() []byte {
 	o := &Output{
 		Views: []*View{
 			{
-				Name:        "VIEWNAME",
-				Description: "",
+				Name:        t.Name,
+				Description: t.Description,
 				Type:        "template",
 				Config:      t.toConfig(),
 			},
