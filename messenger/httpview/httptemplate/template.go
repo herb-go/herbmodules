@@ -72,6 +72,9 @@ func (t *Template) MustTOML() []byte {
 	return buf.Bytes()
 }
 func (t *Template) Validate() (string, error) {
+	if t.Name == "" {
+		return "Name", nil
+	}
 	if t.Config.Delivery == "" {
 		return "Delivery", nil
 	}
