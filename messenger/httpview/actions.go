@@ -45,7 +45,7 @@ func renderRequest(c notificationview.ViewCenter, b messenger.NotificationBuilde
 	return n, nil
 }
 
-func httpError(err error, w http.ResponseWriter, r *http.Request) bool {
+func HTTPError(err error, w http.ResponseWriter, r *http.Request) bool {
 	if err != nil {
 		if notificationview.IsErrViewNotFound(err) {
 			http.NotFound(w, r)
@@ -70,7 +70,7 @@ func CreateRenderAction(c notificationview.ViewCenter, b messenger.NotificationB
 			return
 		}
 		n, err := renderRequest(c, b, r)
-		if !httpError(err, w, r) {
+		if !HTTPError(err, w, r) {
 			return
 		}
 		messenger.MustRenderNotification(w, n)
@@ -84,7 +84,7 @@ func CreateSendAction(c notificationview.ViewCenter, b messenger.NotificationBui
 			return
 		}
 		n, err := renderRequest(c, b, r)
-		if !httpError(err, w, r) {
+		if !HTTPError(err, w, r) {
 			return
 		}
 		err = sender.Send(n)

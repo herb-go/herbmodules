@@ -12,45 +12,54 @@ import (
 )
 
 type Output struct {
+	Views []*View
+}
+
+type View struct {
 	Name        string
 	Description string
+	Type        string
 	Config      *templateview.Config
 }
-type Template struct {
+type TemplateConfig struct {
 	TTLInSeconds    int64
-	Constants       map[string]string
 	Delivery        string
 	Topic           string
 	ContentTemplate map[string]string
 	HeaderTemplate  map[string]string
-	Required        []string
 	Params          texttemplate.ParamDefinitions
 	Engine          string
-	Data            map[string]string
+}
+type Template struct {
+	Config TemplateConfig
+	Data   map[string]string
 }
 
-func (t *Template) config() *templateview.Config {
+func (t *Template) toConfig() *templateview.Config {
 	return &templateview.Config{
-		Params:          t.Params,
-		Constants:       t.Constants,
-		TTLInSeconds:    t.TTLInSeconds,
-		ContentTemplate: t.ContentTemplate,
-		HeaderTemplate:  t.HeaderTemplate,
-		Topic:           t.Topic,
-		Required:        t.Required,
-		Engine:          t.Engine,
-		Delivery:        t.Delivery,
+		Params:          t.Config.Params,
+		TTLInSeconds:    t.Config.TTLInSeconds,
+		ContentTemplate: t.Config.ContentTemplate,
+		HeaderTemplate:  t.Config.HeaderTemplate,
+		Topic:           t.Config.Topic,
+		Engine:          t.Config.Engine,
+		Delivery:        t.Config.Delivery,
 	}
 }
 func (t *Template) Parse() (*templateview.View, error) {
-	c := t.config()
+	c := t.toConfig()
 	return c.Create()
 }
 func (t *Template) MustTOML() []byte {
 	o := &Output{
-		Name:        "VIEWNAME",
-		Description: "VIEWDESCRPIPTION",
-		Config:      t.config(),
+		Views: []*View{
+			{
+				Name:        "VIEWNAME",
+				Description: "",
+				Type:        "template",
+				Config:      t.toConfig(),
+			},
+		},
 	}
 	buf := bytes.NewBuffer(nil)
 	e := toml.NewEncoder(buf)
@@ -61,23 +70,23 @@ func (t *Template) MustTOML() []byte {
 	return buf.Bytes()
 }
 func (t *Template) Validate() (string, error) {
-	if t.Delivery == "" {
+	if t.Config.Delivery == "" {
 		return "Delivery", nil
 	}
-	if t.Engine == "" {
+	if t.Config.Engine == "" {
 		return "Engine", nil
 	}
-	engine, err := texttemplate.GetEngine(t.Engine)
+	engine, err := texttemplate.GetEngine(t.Config.Engine)
 	if err != nil {
 		return "Engine", nil
 	}
-	for k, v := range t.HeaderTemplate {
+	for k, v := range t.Config.HeaderTemplate {
 		_, err := engine.Parse(v, herbtext.DefaultEnvironment())
 		if err != nil {
 			return fmt.Sprintf("%s.%s", "HeaderTemplate", k), nil
 		}
 	}
-	for k, v := range t.ContentTemplate {
+	for k, v := range t.Config.ContentTemplate {
 		_, err := engine.Parse(v, herbtext.DefaultEnvironment())
 		if err != nil {
 			return fmt.Sprintf("%s.%s", "ContentTemplate", k), nil
