@@ -157,6 +157,6 @@ func MustParseWith(pattern string, paramsloaders ...func(r *http.Request) (strin
 			}
 			replacements = append(replacements, replacers[k].token, url.PathEscape(value))
 		}
-		return roleparser.Parse(strings.NewReplacer(replacements...).Replace(pattern))
+		return roleparser.ParseRoles(strings.NewReplacer(replacements...).Replace(pattern))
 	})
 }
