@@ -17,6 +17,9 @@ import (
 var DefaultPolicyLoader = protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
 	return role.Deny, nil
 })
+var Superuser = protecter.PolicyLoaderFunc(func(r *http.Request) (role.Policy, error) {
+	return role.Superuser, nil
+})
 var DefaultOnDeny = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, http.StatusText(403), 403)
 })
