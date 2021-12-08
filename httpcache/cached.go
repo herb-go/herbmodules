@@ -1,7 +1,9 @@
-package responsecache
+package httpcache
 
 import (
 	"net/http"
+
+	"github.com/herb-go/herb/middleware/httpinfo"
 )
 
 type cached struct {
@@ -18,21 +20,23 @@ func mergeHeader(src http.Header, dst *http.Header) {
 	}
 }
 
-func (c *cached) Output(w http.ResponseWriter) error {
+func (c *cached) MustOutput(w http.ResponseWriter) {
 	h := w.Header()
 	mergeHeader(c.Header, &h)
 	w.WriteHeader(c.StatusCode)
 	_, err := w.Write(c.Body)
-	return err
+	if err != nil {
+		panic(err)
+	}
 }
 
-func cacheContext(ctx *Context) *cached {
-	data := ctx.Response.UncommittedData()
+func cacheResponse(resp *httpinfo.Response) *cached {
+	data := resp.UncommittedData()
 	c := &cached{
-		StatusCode: ctx.Response.StatusCode,
+		StatusCode: resp.StatusCode,
 		Header:     http.Header{},
 		Body:       data,
 	}
-	mergeHeader(ctx.Response.Header(), &c.Header)
+	mergeHeader(resp.Header(), &c.Header)
 	return c
 }
