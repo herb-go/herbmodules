@@ -14,23 +14,27 @@ import (
 var Encoding = msgpackencoding.Encoding
 
 type Cache struct {
-	Preset     *cachepreset.Preset
-	Identifier identifier.Identifier
-	Validator  httpinfo.Validator
+	PresetLoader PresetLoader
+	Identifier   identifier.Identifier
+	Validator    httpinfo.Validator
 }
 
 func (c *Cache) Clone() *Cache {
 	return &Cache{
-		Preset:     c.Preset,
-		Identifier: c.Identifier,
-		Validator:  c.Validator,
+		PresetLoader: c.PresetLoader,
+		Identifier:   c.Identifier,
+		Validator:    c.Validator,
 	}
 }
 func (c *Cache) OverridePreset(p *cachepreset.Preset) *Cache {
+	return c.OverridePresetLoader(Preset(p))
+}
+func (c *Cache) OverridePresetLoader(l PresetLoader) *Cache {
 	nc := c.Clone()
-	nc.Preset = p
+	nc.PresetLoader = l
 	return nc
 }
+
 func (c *Cache) OverrideIdentifier(i identifier.Identifier) *Cache {
 	nc := c.Clone()
 	nc.Identifier = i
@@ -42,7 +46,7 @@ func (c *Cache) OverrideValidator(v httpinfo.Validator) *Cache {
 	return nc
 }
 func (c *Cache) ServeMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if c.Preset == nil {
+	if c.PresetLoader == nil {
 		next(w, r)
 		return
 	}
@@ -67,7 +71,11 @@ func (c *Cache) ServeMiddleware(w http.ResponseWriter, r *http.Request, next htt
 		page = cacheResponse(resp)
 		return Encoding.Marshal(page)
 	}
-	preset := c.Preset.Concat(cachepreset.Encoding(Encoding), cachepreset.Loader(loader))
+	preset, err := c.PresetLoader.LoadPreset(r)
+	if err != nil {
+		panic(err)
+	}
+	preset = preset.Concat(cachepreset.Encoding(Encoding), cachepreset.Loader(loader))
 	err = preset.Load([]byte(key), page)
 	if err != nil {
 		if err != herbdata.ErrEntryTooLarge && err != herbcache.ErrNotCacheable {
