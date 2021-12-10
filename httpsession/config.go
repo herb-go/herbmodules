@@ -5,7 +5,7 @@ var DefaultMaxLifetime = int64(7 * 24 * 3600)
 var DefaultLastActiveInterval = int64(60)
 
 type Config struct {
-	DisableAutoStart   bool
+	AutoStart          bool
 	Engine             EngineName
 	EngineConfig       func(interface{}) error `config:", lazyload"`
 	MaxLifetime        int64
@@ -28,7 +28,7 @@ func setConfigDefaults(c *Config) {
 }
 func (c *Config) ApplyTo(s *Store) error {
 	setConfigDefaults(c)
-	s.AutoStart = !c.DisableAutoStart
+	s.AutoStart = !c.AutoStart
 	s.MaxLifetime = c.MaxLifetime
 	s.Timeout = c.Timeout
 	s.LastActiveInterval = c.LastActiveInterval
