@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-var ErrSessionNotStarted = errors.New("session not started")
-
 var ErrUnknownSessionEngine = errors.New("unknown session engine")
 
 func NewUnknownSessionEngineError(name EngineName) error {

@@ -24,23 +24,13 @@ type Store struct {
 func (s *Store) Install() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	return s.Installer.InstallerMiddleware(s)
 }
-
 func (s *Store) StartSession() (string, *Session, error) {
 	t, err := s.Engine.NewToken()
 	if err != nil {
 		return "", nil, err
 	}
 	session := newSession()
-	session.MarkAsStarted()
-	session.MarkAsUpdated()
-	session.token.Store(t)
-	now := time.Now().Unix()
-	expiredAt := now + s.MaxLifetime
-	createdAt := now
-	lastactive := now
-	session.expiredAt = &expiredAt
-	session.createdAt = &createdAt
-	session.lastactive = &lastactive
+	session.Start(t, s.MaxLifetime)
 	return t, session, nil
 }
 
@@ -77,6 +67,13 @@ func (s *Store) LoadSession(token string) (*Session, error) {
 }
 
 func (s *Store) SaveSession(session *Session) (err error) {
+	if !session.Started() {
+		t, err := s.Engine.NewToken()
+		if err != nil {
+			return err
+		}
+		session.Start(t, s.MaxLifetime)
+	}
 	data, err := msgpack.Marshal(session.getdata())
 	if err != nil {
 		return err

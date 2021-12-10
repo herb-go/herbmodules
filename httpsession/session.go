@@ -3,6 +3,7 @@ package httpsession
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/herb-go/herbdata"
 )
@@ -36,6 +37,19 @@ type Session struct {
 	loadedFrom string
 }
 
+func (s *Session) Start(token string, maxlifetime int64) {
+	s.MarkAsStarted()
+	s.MarkAsUpdated()
+	s.token.Store(token)
+	now := time.Now().Unix()
+	expiredAt := now + maxlifetime
+	createdAt := now
+	lastactive := now
+	s.expiredAt = &expiredAt
+	s.createdAt = &createdAt
+	s.lastactive = &lastactive
+}
+
 func (s *Session) setdata(data *SessionData) {
 	atomic.StoreInt64(s.createdAt, data.CreatedAt)
 	atomic.StoreInt64(s.expiredAt, data.ExpiredAt)
@@ -63,9 +77,6 @@ func (s *Session) getdata() *SessionData {
 }
 
 func (s *Session) Store(key string, data []byte) error {
-	if !s.Started() {
-		return ErrSessionNotStarted
-	}
 	s.data.Store(key, data)
 	s.MarkAsUpdated()
 	return nil
@@ -75,9 +86,6 @@ func (s *Session) Set(key []byte, data []byte) error {
 	return s.Store(string(key), data)
 }
 func (s *Session) Load(key string) ([]byte, error) {
-	if !s.Started() {
-		return nil, ErrSessionNotStarted
-	}
 	v, ok := s.data.Load(key)
 	if !ok {
 		return nil, herbdata.ErrNotFound
@@ -90,9 +98,6 @@ func (s *Session) Get(key []byte) ([]byte, error) {
 }
 
 func (s *Session) Remove(key string) error {
-	if !s.Started() {
-		return ErrSessionNotStarted
-	}
 	s.data.Delete(key)
 	s.MarkAsUpdated()
 	return nil

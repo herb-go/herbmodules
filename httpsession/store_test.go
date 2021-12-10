@@ -171,7 +171,7 @@ func TestNotAutoStart(t *testing.T) {
 		panic(err)
 	}
 	resp.Body.Close()
-	if resp.StatusCode != 500 {
+	if resp.StatusCode != 404 {
 		t.Fatal()
 	}
 	req, err = http.NewRequest("GET", server.URL+"/set?value=test", nil)
@@ -183,7 +183,7 @@ func TestNotAutoStart(t *testing.T) {
 		panic(err)
 	}
 	resp.Body.Close()
-	if resp.StatusCode != 500 {
+	if resp.StatusCode != 200 {
 		t.Fatal()
 	}
 	req, err = http.NewRequest("GET", server.URL+"/delete", nil)
@@ -195,7 +195,7 @@ func TestNotAutoStart(t *testing.T) {
 		panic(err)
 	}
 	resp.Body.Close()
-	if resp.StatusCode != 500 {
+	if resp.StatusCode != 200 {
 		t.Fatal()
 	}
 }

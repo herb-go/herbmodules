@@ -129,15 +129,15 @@ func TestNotStarted(t *testing.T) {
 		t.Fatal()
 	}
 	err = s.Set([]byte("test"), []byte("data"))
-	if err != ErrSessionNotStarted {
+	if err != nil {
 		t.Fatal()
 	}
 	_, err = s.Get([]byte("test"))
-	if err != ErrSessionNotStarted {
+	if err != nil {
 		t.Fatal()
 	}
 	err = s.Delete([]byte("test"))
-	if err != ErrSessionNotStarted {
+	if err != nil {
 		t.Fatal()
 	}
 	s.MarkAsStarted()
