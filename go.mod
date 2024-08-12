@@ -16,7 +16,7 @@ require (
 	github.com/herb-go/herbdata v0.0.0-20211208163122-48f0cedda4b4
 	github.com/herb-go/herbdata-drivers v0.0.0-20210316183942-005f04b16884
 	github.com/herb-go/herbmodule-drivers v0.0.0-20211014162935-8125fc21e8d0
-	github.com/herb-go/herbsecurity v0.0.0-20210518130010-5aca00c8cb23
+	github.com/herb-go/herbsecurity v0.0.0-20240812104601-15db7388b5b2
 	github.com/herb-go/herbtext v0.0.0-20210303154930-6bc39729d65f
 	github.com/herb-go/herbtext-drivers v0.0.0-20210130160355-3de8ebdb8dbe // indirect
 	github.com/herb-go/misc v0.0.0-20211126182020-07f86379a857 // indirect
